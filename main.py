@@ -26,7 +26,7 @@ elif choice == "2":
         check_group = check_group_exists(group_name)
         members = enter_group(group_name)
         if not members:
-            print(f"No members found in group '{group_name}'.")
+            print(f"No members found in {group_name}.")
         else:
             for member in members:
                 print(f"Member Name: {member[1]}, Contribution: {member[2]}, Week: {member[3]}")
