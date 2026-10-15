@@ -1,5 +1,7 @@
 import sqlite3 as sql
 
+contribution = 50.00
+
 def db_connect():
     connection = sql.connect('training.db', detect_types=sql.PARSE_DECLTYPES)
     return connection
@@ -21,33 +23,54 @@ def create_group(group_name):
     "receives_pot INTEGER NOT NULL DEFAULT 0, " \
     "FOREIGN KEY (group_id) REFERENCES Groups(id))")
 
+    cur.execute("CREATE TABLE IF NOT EXISTS Payout History " \
+    "(id INTEGER PRIMARY KEY AUTOINCREMENT, " \
+    "group_id INTEGER NOT NULL, " \
+    "week INTEGER NOT NULL, " \
+    "total_contribution INTEGER NOT NULL, " \
+    "receiver TEXT NOT NULL, " \
+    "FOREIGN KEY (group_id) REFERENCES Groups(id))")
+
     cur.execute("INSERT INTO Groups (group_name) VALUES (?)", (group_name,))
     connection.commit()
     connection.close()
 
-def enter_group(group_name):
+def list_groups():
     connection = db_connect()
     cur = connection.cursor()
-    result = cur.execute("SELECT * FROM Members WHERE group_id = (SELECT id FROM Groups WHERE group_name = ?)", (group_name,))
-    if result is None:
-        print(f"Group '{group_name}' does not exist or there are no members in it.")
-        connection.close()
-        return []
-    return result.fetchall()
+    groups = cur.execute("SELECT group_name FROM Groups").fetchall()
+    connection.close()
+    return [group[0] for group in groups]
+
+# def enter_group(group_name):
+#     connection = db_connect()
+#     cur = connection.cursor()
+#     result = cur.execute("SELECT * FROM Members WHERE group_id = (SELECT id FROM Groups WHERE group_name = ?)", (group_name,))
+#     if result is None:
+#         print(f"Group '{group_name}' does not exist or there are no members in it.")
+#         connection.close()
+#         return []
+#     return result.fetchall()
+
+def check_group_exists(group_name):
+    connection = db_connect()
+    cur = connection.cursor()
+    group_id = cur.execute("SELECT id FROM Groups WHERE group_name = ?", (group_name,)).fetchone()
+    connection.close()
+    if group_id is None:
+        print(f"Group '{group_name}' does not exist.")
+        return None
+    return group_id
 
 def add_member(group_name, member_name):
     connection = db_connect()
     cur = connection.cursor()
-    group_id = cur.execute("SELECT id FROM Groups WHERE group_name = ?", (group_name,)).fetchone()
-
-    if group_id:
-        cur.execute("INSERT INTO Members (member_name, contribution, group_id) VALUES (?, ?, ?)", (member_name, 0, group_id[0]))
-        connection.commit()
-        connection.close()
-    else:
-        print(f"Group '{group_name}' does not exist.")
-        connection.close()
-
+    check_group = check_group_exists(group_name)
+  
+    cur.execute("INSERT INTO Members (member_name, contribution, group_id) VALUES (?, ?, ?)", (member_name, 0, check_group[0]))
+    connection.commit()
+    connection.close()
+   
 def update_contribution(group_name, member_name, contribution):
     connection = db_connect()
     cur = connection.cursor()
@@ -105,17 +128,39 @@ def close_week(group_name):
     group_id = cur.execute("SELECT id FROM Groups WHERE group_name = ?", (group_name,)).fetchone()
 
     if group_id:
+        expected_contribution = cur.execute("SELECT COUNT(*) FROM Members WHERE group_id = ?", (group_id[0],)).fetchone()[0] * contribution
         current_week = cur.execute("SELECT week FROM Members WHERE group_id = (SELECT id FROM Groups WHERE group_name = ?)", (group_name,)).fetchone()[0]
         current_receiver = cur.execute("SELECT member_name FROM Members WHERE group_id = (SELECT id FROM Groups WHERE group_name = ?) AND member_to_receive_pot = 1", (group_name,)).fetchone()[0]
         total_contribution = cur.execute("SELECT SUM(contribution) FROM Members WHERE group_id = (SELECT id FROM Groups WHERE group_name = ?)", (group_name,)).fetchone()[0]
 
+        if total_contribution < expected_contribution:
+            print(f"Cannot close week {current_week} for group '{group_name}'. Some have not paid their contributions in full.")
+            connection.close()
+            return 
+        
         print(f"Week {current_week} closed for group '{group_name}'.")
         print(f"Current receiver: {current_receiver}")
         print(f"Total contribution: {total_contribution}")
 
+        cur.execute("INSERT INTO Payout_History (group_id, week, total_contribution, receiver) VALUES (?, ?, ?, ?)", (group_id[0], current_week, total_contribution, current_receiver))
         cur.execute("UPDATE Members SET contribution = 0, receives_pot = 0 WHERE group_id = ?", (group_id,))
         connection.commit()
         connection.close()
     else:
         print(f"Group '{group_name}' does not exist.")
         connection.close()
+
+def get_records(group_name):
+    connection = db_connect()
+    cur = connection.cursor()
+    group_id = cur.execute("SELECT id FROM Groups WHERE group_name = ?", (group_name,)).fetchone()
+
+    if group_id:
+        records = cur.execute("SELECT week, total_contribution, receiver FROM Payout_History WHERE group_id = ?", (group_id[0],)).fetchall()
+        connection.close()
+        debtors = get_debtors(group_name)
+        return records, debtors
+    else:
+        print(f"Group '{group_name}' does not exist.")
+        connection.close()
+        return []
