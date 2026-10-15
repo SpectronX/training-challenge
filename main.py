@@ -1,79 +1,77 @@
-import sqlite3 as sql
+from db_func import *
 
-def db_connect():
-    connection = sql.connect('training.db', detect_types=sql.PARSE_DECLTYPES)
-    return connection
+print("Welcome to the Group Contribution Tracker! \n")
+print("1. List existing groups")
+print("2. View members of a group")
+print("3. Create a new group")
+print("4. Add a member to a group")
+print("5. Update a member's contribution")
+print("6. Set the current week for a group")
+print("7. Close the current week for a group")
+print("8. Get the records of a group")
 
-def create_group(group_name):
-    connection = db_connect()
-    cur = connection.cursor()
+choice = input("Enter your choice (1-8): ")
+if choice == "1":
+    try:
+        groups = list_groups()
+        print("Existing groups:")
+        for group in groups:
+            print(group)
+    except Exception as e:
+        print(f"An error occurred while listing groups: {e}")
 
-    cur.execute("CREATE TABLE IF NOT EXISTS Groups " \
-    "(id INTEGER PRIMARY KEY AUTOINCREMENT, " \
-    "group_name TEXT NOT NULL)")
+elif choice == "2":
+    try:
+        group_name = input("Enter the name of the group to view members: ")
+        check_group = check_group_exists(group_name)
+        members = enter_group(group_name)
+        if not members:
+            print(f"No members found in group '{group_name}'.")
+        else:
+            for member in members:
+                print(f"Member Name: {member[1]}, Contribution: {member[2]}, Week: {member[3]}")
+    except Exception as e:
+        print(f"An error occurred while viewing members: {e}")
+   
+elif choice == "3":
+    group_name = input("Enter the name of the new group: ")
+    create_group(group_name)
+    print(f"{group_name} created successfully.")
 
-    cur.execute("CREATE TABLE IF NOT EXISTS Members " \
-    "(id INTEGER PRIMARY KEY AUTOINCREMENT, " \
-    "member_name TEXT NOT NULL, " \
-    "contribution INTEGER NOT NULL, " \
-    "group_id INTEGER NOT NULL, " \
-    "FOREIGN KEY (group_id) REFERENCES Groups(id))")
+elif choice == "4":
+    group_name = input("Name of the group to add member to: ")
+    check_group = check_group_exists(group_name)
+    member_name = input("Enter the name of the new member: ")
+    add_member(group_name, member_name)
+    print(f"{member_name} added to {group_name}.")
 
-    cur.execute("INSERT INTO Groups (group_name) VALUES (?)", (group_name,))
-    connection.commit()
-    connection.close()
+elif choice == "5":
+    group_name = input("Enter the name of the group: ")
+    check_group = check_group_exists(group_name)
+    member_name = input("Enter the name of the member: ")
+    contribution = float(input("Enter the new contribution amount: "))
+    update_contribution(group_name, member_name, contribution)
 
-def enter_group(group_name):
-    connection = db_connect()
-    cur = connection.cursor()
-    result = cur.execute("SELECT * FROM Members WHERE group_id = (SELECT id FROM Groups WHERE group_name = ?)", (group_name,))
-    if result is None:
-        print(f"Group '{group_name}' does not exist or there are no members in it.")
-        connection.close()
-        return []
-    return result.fetchall()
+elif choice == "6":
+    group_name = input("Enter the name of the group: ")
+    check_group = check_group_exists(group_name)
+    week = int(input("Enter the current week number: "))
+    set_week(group_name, week)
+ 
+elif choice == "7":
+    group_name = input("Enter the name of the group: ")
+    check_group = check_group_exists(group_name)
+    close_week(group_name)
 
-def add_member(group_name, member_name):
-    connection = db_connect()
-    cur = connection.cursor()
-    cur.execute("SELECT id FROM Groups WHERE group_name = ?", (group_name,))
-    group_id = cur.fetchone()
+elif choice == "8":
+    group_name = input("Enter the name of the group: ")
+    check_group = check_group_exists(group_name)
 
-    if group_id:
-        cur.execute("INSERT INTO Members (member_name, contribution, group_id) VALUES (?, ?, ?)", (member_name, 0, group_id[0]))
-        connection.commit()
-        connection.close()
-    else:
-        print(f"Group '{group_name}' does not exist.")
-        connection.close()
+    records, debtors = get_records(group_name)
+    print("Payout History:")
+    for record in records:
+        print(f"Week {record[0]}: GHS {record[1]} potted to {record[2]}")
 
-def update_contribution(group_name, member_name, contribution):
-    connection = db_connect()
-    cur = connection.cursor()
-    cur.execute("SELECT id FROM Groups WHERE group_name = ?", (group_name,))
-
-    group_id = cur.fetchone()
-    if group_id:
-        cur.execute("UPDATE Members SET contribution = ? WHERE member_name = ? AND group_id = ?", (contribution, member_name, group_id[0]))
-        connection.commit()
-        connection.close()
-    else:
-        print(f"Group '{group_name}' does not exist.")
-        connection.close()
-    
-def get_debtors(group_name):
-    connection = db_connect()
-    cur = connection.cursor()
-    cur.execute("SELECT id FROM Groups WHERE group_name = ?", (group_name,))
-    group_id = cur.fetchone()
-
-    if group_id:
-        cur.execute("SELECT member_name, contribution FROM Members WHERE group_id = ? AND contribution < 50.00", (group_id[0],))
-        debtors = cur.fetchall()
-        connection.close()
-        return debtors
-    else:
-        print(f"Group '{group_name}' does not exist.")
-        connection.close()
-        return []
-
+    print("Debtors:")
+    for debtor in debtors:
+        print(f"{debtor[0]}: {debtor[1]}")
