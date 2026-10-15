@@ -1,77 +1,86 @@
 from db_func import *
 
 print("Welcome to the Group Contribution Tracker! \n")
-print("1. List existing groups")
-print("2. View members of a group")
-print("3. Create a new group")
-print("4. Add a member to a group")
-print("5. Update a member's contribution")
-print("6. Set the current week for a group")
-print("7. Close the current week for a group")
-print("8. Get the records of a group")
 
-choice = input("Enter your choice (1-8): ")
-if choice == "1":
-    try:
-        groups = list_groups()
-        print("Existing groups:")
-        for group in groups:
-            print(group)
-    except Exception as e:
-        print(f"An error occurred while listing groups: {e}")
+print("1. Create a new group (press 100 to create a new group)")
 
-elif choice == "2":
-    try:
-        group_name = input("Enter the name of the group to view members: ")
-        check_group = check_group_exists(group_name)
-        members = enter_group(group_name)
-        if not members:
-            print(f"No members found in {group_name}.")
-        else:
-            for member in members:
-                print(f"Member Name: {member[1]}, Contribution: {member[2]}, Week: {member[3]}")
-    except Exception as e:
-        print(f"An error occurred while viewing members: {e}")
-   
-elif choice == "3":
+print("\nGroups present on the system: ")
+
+try:
+    groups = list_groups()
+    print("Existing groups:")
+    for group in groups:
+        print(f"--> {group}")
+except Exception as e:
+        print(f"No groups found -> {e}")
+
+group_num = int(input("\nSelect a group or create a new one (press 0 to exit): "))
+
+if group_num == 100:
     group_name = input("Enter the name of the new group: ")
     create_group(group_name)
-    print(f"{group_name} created successfully.")
+    print(f"\n{group_name} created successfully.")
+    exit()
 
-elif choice == "4":
-    group_name = input("Name of the group to add member to: ")
-    check_group = check_group_exists(group_name)
-    member_name = input("Enter the name of the new member: ")
-    add_member(group_name, member_name)
-    print(f"{member_name} added to {group_name}.")
+if group_num == 0:
+    print("Exiting")
+    exit()
 
-elif choice == "5":
-    group_name = input("Enter the name of the group: ")
+while True:
+    group_name = groups[group_num - 1]
     check_group = check_group_exists(group_name)
-    member_name = input("Enter the name of the member: ")
-    contribution = float(input("Enter the new contribution amount: "))
-    update_contribution(group_name, member_name, contribution)
 
-elif choice == "6":
-    group_name = input("Enter the name of the group: ")
-    check_group = check_group_exists(group_name)
-    week = int(input("Enter the current week number: "))
-    set_week(group_name, week)
+    print(f"\n Welcome to {group_name}! Let's take a look at the available options.\n")
+
+    print(f"1. View membership")
+    print(f"2. Add a member")
+    print("3. Update a member's contribution")
+    print(f"4. Set the current week")
+    print(f"5. Close the current week")
+    print(f"6. Get the records of {group_name}")
+    print("0. Exit")
+
+    choice = input("Enter your choice (1-6): ")
+    if choice == "1":
+        try:
+            members = enter_group(group_name)
+            if not members:
+                print(f"\nNo members found.")
+            else:
+                for member in members:
+                    print(f"\nMember Name: {member[1]}, Contribution: {member[2]}, Week: {member[4]}")
+        except Exception as e:
+            print(f"\nAn error occurred while viewing members: {e}")
+   
+    elif choice == "2":
+        member_name = input("\nEnter the name of the new member: ")
+        add_member(group_name, member_name)
+        print(f"\nMember added successfully: {member_name}.")
+
+    elif choice == "3":
+        member_name = input("\nEnter the name of the member: ")
+        contribution = float(input("Enter the new contribution amount: "))
+        update_contribution(group_name, member_name, contribution)
+
+    elif choice == "4":
+        week = int(input("\nEnter the current week: "))
+        print(f"\nCurrent week set to {week}.")
+        set_week(group_name, week)
  
-elif choice == "7":
-    group_name = input("Enter the name of the group: ")
-    check_group = check_group_exists(group_name)
-    close_week(group_name)
+    elif choice == "5":
+        close_week(group_name)
+        print(f"\nWeek closed.")
+        
+    elif choice == "6":
+        records, debtors = get_records(group_name)
+        print("\nPayout History:")
+        for record in records:
+            print(f"\nWeek {record[0]}: GHS {record[1]} potted to {record[2]}")
 
-elif choice == "8":
-    group_name = input("Enter the name of the group: ")
-    check_group = check_group_exists(group_name)
+        print("\nDebtors:")
+        for debtor in debtors:
+            print(f"\n{debtor[0]}: {debtor[1]}")
 
-    records, debtors = get_records(group_name)
-    print("Payout History:")
-    for record in records:
-        print(f"Week {record[0]}: GHS {record[1]} potted to {record[2]}")
-
-    print("Debtors:")
-    for debtor in debtors:
-        print(f"{debtor[0]}: {debtor[1]}")
+    elif choice == "0":
+        print("\nExiting")
+        exit()

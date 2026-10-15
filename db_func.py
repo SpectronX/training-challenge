@@ -102,6 +102,8 @@ def update_contribution(group_name, member_name, contribution):
     connection.commit()
     connection.close()
 
+    print(f"Contribution updated for {member_name}")
+
 length_query = "SELECT COUNT(*) FROM Members WHERE group_id = ?"
 
 def set_week(group_name, week):
