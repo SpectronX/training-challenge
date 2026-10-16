@@ -55,7 +55,6 @@ while True:
     elif choice == "2":
         member_name = input("\nEnter the name of the new member: ")
         add_member(group_name, member_name)
-        print(f"\nMember added successfully: {member_name}.")
 
     elif choice == "3":
         member_name = input("\nEnter the name of the member: ")
@@ -64,12 +63,10 @@ while True:
 
     elif choice == "4":
         week = int(input("\nEnter the current week: "))
-        print(f"\nCurrent week set to {week}.")
         set_week(group_name, week)
  
     elif choice == "5":
         close_week(group_name)
-        print(f"\nWeek closed.")
         
     elif choice == "6":
         records, debtors = get_records(group_name)

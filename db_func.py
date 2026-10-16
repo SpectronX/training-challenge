@@ -77,10 +77,20 @@ def add_member(group_name, member_name):
         print(f"{member_name} already exists in {group_name}.")
         connection.close()
         return
-  
-    cur.execute("INSERT INTO Members (member_name, contribution, group_id) VALUES (?, ?, ?)", (member_name, 0, check_group[0]))
+
+    query_1 = "SELECT week FROM Members WHERE group_id = ?"
+    member_week = cur.execute(query_1, (check_group[0],)).fetchone()
+    if member_week:
+        member_week = member_week[0]
+    else:
+        member_week = 0
+
+    query_2 = "INSERT INTO Members (member_name, contribution, group_id, week) VALUES (?, ?, ?, ?)"
+    cur.execute(query_2, (member_name, 0, check_group[0], member_week))
     connection.commit()
     connection.close()
+
+    print(f"Member added successfully: {member_name}.")
    
 def update_contribution(group_name, member_name, contribution):
     connection, cur = get_cursor()
@@ -97,8 +107,9 @@ def update_contribution(group_name, member_name, contribution):
         print(f"Week for {group_name} has not been set. Cannot update contribution.")
         connection.close()
         return
-    
-    cur.execute("UPDATE Members SET contribution = ? WHERE member_name = ? AND group_id = ?", (contribution, member_name, check_group[0]))
+
+    update_query = "UPDATE Members SET contribution = ? WHERE member_name = ? AND group_id = ?"
+    cur.execute(update_query, (contribution, member_name, check_group[0]))
     connection.commit()
     connection.close()
 
@@ -120,20 +131,28 @@ def set_week(group_name, week):
         print(f"Week for {group_name} has already been set to {week}. Cannot set it again.")
         connection.close()
         return
-    
-    cur.execute("UPDATE Members SET week = ?, contribution = 0 WHERE group_id = ?", (week, check_group[0]))
-    cur.execute("UPDATE Members SET receives_pot = 1 WHERE group_id = ? AND id = ?", (check_group[0], member_to_receive_pot))
+
+    query_1 = "UPDATE Members SET week = ?, contribution = 0 WHERE group_id = ?"
+    query_2 = "UPDATE Members SET receives_pot = 1 WHERE group_id = ? AND id = ?"
+    cur.execute(query_1, (week, check_group[0]))
+    cur.execute(query_2, (check_group[0], member_to_receive_pot))
     connection.commit()
     connection.close()
+
+    print(f"\nCurrent week set to {week}.")
 
 def close_week(group_name):
     connection, cur = get_cursor()
     check_group = check_group_exists(group_name)
+
+    query_1 = "SELECT week FROM Members WHERE group_id = (SELECT id FROM Groups WHERE group_name = ?)"
+    query_2 = "SELECT member_name FROM Members WHERE receives_pot = 1 AND group_id = (SELECT id FROM Groups WHERE group_name = ?)" 
+    query_3 = "SELECT SUM(contribution) FROM Members WHERE group_id = (SELECT id FROM Groups WHERE group_name = ?)"
     
     expected_contribution = cur.execute(length_query, (check_group[0],)).fetchone()[0] * contribution
-    current_week = cur.execute("SELECT week FROM Members WHERE group_id = (SELECT id FROM Groups WHERE group_name = ?)", (group_name,)).fetchone()[0]
-    current_receiver = cur.execute("SELECT member_name FROM Members WHERE receives_pot = 1 AND group_id = (SELECT id FROM Groups WHERE group_name = ?)", (group_name,)).fetchone()[0]
-    total_contribution = cur.execute("SELECT SUM(contribution) FROM Members WHERE group_id = (SELECT id FROM Groups WHERE group_name = ?)", (group_name,)).fetchone()[0]
+    current_week = cur.execute(query_1, (group_name,)).fetchone()[0]
+    current_receiver = cur.execute(query_2, (group_name,)).fetchone()[0]
+    total_contribution = cur.execute(query_3, (group_name,)).fetchone()[0]
 
     if total_contribution < expected_contribution:
         print(f"Cannot close week {current_week} for {group_name}. There are outstanding contributions.")
@@ -144,16 +163,20 @@ def close_week(group_name):
     print(f"Receiver: {current_receiver}")
     print(f"Total contribution: GHc {total_contribution}")
 
-    cur.execute("INSERT INTO Payout_History (group_id, week, total_contribution, receiver) VALUES (?, ?, ?, ?)", (check_group[0], current_week, total_contribution, current_receiver))
+    query_4 = "INSERT INTO Payout_History (group_id, week, total_contribution, receiver) VALUES (?, ?, ?, ?)"
+    cur.execute(query_4, (check_group[0], current_week, total_contribution, current_receiver))
     cur.execute("UPDATE Members SET contribution = 0, receives_pot = 0 WHERE group_id = ?", (check_group[0],))
     connection.commit()
     connection.close()
+
+    print(f"\n Week {current_week} closed.")
 
 def get_debtors(group_name):
     connection, cur = get_cursor()
     check_group = check_group_exists(group_name)
 
-    cur.execute("SELECT member_name, contribution FROM Members WHERE group_id = ? AND contribution < 50.00", (check_group[0],))
+    query = "SELECT member_name, contribution FROM Members WHERE group_id = ? AND contribution < 50.00"
+    cur.execute(query, (check_group[0],))
     debtors = cur.fetchall()
     connection.close()
     return debtors
@@ -162,7 +185,8 @@ def get_records(group_name):
     connection, cur = get_cursor()
     check_group = check_group_exists(group_name)
 
-    records = cur.execute("SELECT week, total_contribution, receiver FROM Payout_History WHERE group_id = ?", (check_group[0],)).fetchall()
+    query = "SELECT week, total_contribution, receiver FROM Payout_History WHERE group_id = ?"
+    records = cur.execute(query, (check_group[0],)).fetchall()
     connection.close()
     debtors = get_debtors(group_name)
     return records, debtors
