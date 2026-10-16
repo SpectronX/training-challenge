@@ -1,4 +1,5 @@
 ### coding challenge
+---------------------
 
 this coding challenge required a small programme to manage a savings group (Susu). the programme creates a group for the members, for which they contribute a fixed amount of money on a weekly basis. as to when members joined the group, they are assigned a turn to receive the total amount contributed by the group per week. 
 
@@ -6,6 +7,8 @@ the programme allows for the creation of a group, adding members to a group, rec
 
 
 ### modular programme structure
+---------------------------
+
 the programme has two main modules, the database module with functions that handle interactions with the database, and the main module that handles the user interface (through the command line) and calls the database module functions to perform the required operations. a summary of the functions in the database module is provided below: 
 
 - database module
