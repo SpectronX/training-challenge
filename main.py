@@ -48,7 +48,7 @@ while True:
                 print(f"\nNo members found.")
             else:
                 for member in members:
-                    print(f"\nMember Name: {member[1]}, Contribution: {member[2]}, Week: {member[4]}")
+                    print(f"\nMember Name: {member[1]}, Contribution: {member[2]:.2f}, Week: {member[4]}")
         except Exception as e:
             print(f"\nAn error occurred while viewing members: {e}")
    
@@ -72,11 +72,11 @@ while True:
         records, debtors = get_records(group_name)
         print("\nPayout History:")
         for record in records:
-            print(f"\nWeek {record[0]}: GHS {record[1]} potted to {record[2]}")
+            print(f"\nWeek {record[0]}: GHS {record[1]:.2f} potted to {record[2]}")
 
         print("\nDebtors:")
         for debtor in debtors:
-            print(f"\n{debtor[0]} | Amount contributed: GHS {debtor[1]} | Amount owed: GHS {50.00 - debtor[1]}")
+            print(f"\n{debtor[0]} | Amount contributed: GHS {debtor[1]:.2f} | Amount owed: GHS {50.00 - debtor[1]:.2f}")
 
     elif choice == "0":
         print("\nExiting")

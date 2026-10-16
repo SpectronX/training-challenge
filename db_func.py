@@ -112,8 +112,8 @@ def update_contribution(group_name, member_name, contribution):
         print(f"Contribution cannot be negative.")
         connection.close()
         return
-    elif contribution > contribution:
-        print(f"Contribution cannot exceed GHS {contribution}.")
+    elif contribution > 50.00:
+        print(f"Contribution cannot exceed GHS 50.00.")
         connection.close()
         return
 
