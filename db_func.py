@@ -167,10 +167,6 @@ def close_week(group_name):
         print(f"Cannot close week {current_week} for {group_name}. There are outstanding contributions.")
         connection.close()
         return 
-    
-    print(f"Week {current_week} closed for {group_name}.")
-    print(f"Receiver: {current_receiver}")
-    print(f"Total contribution: GHc {total_contribution}")
 
     query_4 = "INSERT INTO Payout_History (group_id, week, total_contribution, receiver) VALUES (?, ?, ?, ?)"
     cur.execute(query_4, (check_group[0], current_week, total_contribution, current_receiver))
@@ -178,7 +174,10 @@ def close_week(group_name):
     connection.commit()
     connection.close()
 
-    print(f"\n Week {current_week} closed.")
+    print(f"\nWeek {current_week} closed for {group_name}.")
+    print(f"Receiver: {current_receiver}")
+    print(f"Total contribution: GHc {total_contribution}")
+
 
 def get_debtors(group_name):
     connection, cur = get_cursor()

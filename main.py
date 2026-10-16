@@ -37,7 +37,7 @@ while True:
     print("3. Update a member's contribution")
     print(f"4. Set the current week")
     print(f"5. Close the current week")
-    print(f"6. Get the records of {group_name}")
+    print(f"6. Get the records")
     print("0. Exit")
 
     choice = input("Enter your choice (1-6): ")
