@@ -24,9 +24,9 @@ the programme has two main modules, the database module with functions that hand
 ### automated tests
 --------------------
 
-![Add Member](./images/add member.png)
-![Partial Payment](./images/partial payment.png)
-![Can't Close Week](./images/can't close week.png)
-![View Members](./images/view members.png)
-![Week Closed](./images/week closed.png)
-![Show Records](./images/show records.png)
+![Add Member](images/add_member.png)
+![Partial Payment](images/partial_payment.png)
+![Can't Close Week](images/cant_close_week.png)
+![View Members](images/view_members.png)
+![Week Closed](images/week_closed.png)
+![Show Records](images/show_records.png)
