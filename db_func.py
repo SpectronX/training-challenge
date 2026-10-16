@@ -108,6 +108,15 @@ def update_contribution(group_name, member_name, contribution):
         connection.close()
         return
 
+    if contribution < 0:
+        print(f"Contribution cannot be negative.")
+        connection.close()
+        return
+    elif contribution > contribution:
+        print(f"Contribution cannot exceed GHS {contribution}.")
+        connection.close()
+        return
+
     update_query = "UPDATE Members SET contribution = ? WHERE member_name = ? AND group_id = ?"
     cur.execute(update_query, (contribution, member_name, check_group[0]))
     connection.commit()

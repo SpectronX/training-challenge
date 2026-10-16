@@ -76,7 +76,7 @@ while True:
 
         print("\nDebtors:")
         for debtor in debtors:
-            print(f"\n{debtor[0]}: {debtor[1]}")
+            print(f"\n{debtor[0]} | Amount contributed: GHS {debtor[1]} | Amount owed: GHS {50.00 - debtor[1]}")
 
     elif choice == "0":
         print("\nExiting")
